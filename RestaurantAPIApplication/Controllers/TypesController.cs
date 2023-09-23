@@ -22,13 +22,34 @@ namespace RestaurantAPIApplication.Controllers
 
         // GET: api/Types
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Models.Type>>> GetTypes()
+        public async Task<ActionResult<IEnumerable<Models.Type>>> GetTypes([FromQuery] Parameters clientParameters)
         {
-          if (_context.Types == null)
-          {
-              return NotFound();
-          }
-            return await _context.Types.ToListAsync();
+            if (_context.Types == null)
+            {
+                return NotFound();
+            }
+            var types = await _context.Types
+                    .OrderBy(on => on.Id)
+                    .Skip((clientParameters.PageNumber - 1) * clientParameters.PageSize)
+                    .Take(clientParameters.PageSize)
+                    .ToListAsync();
+
+            var res = new List<Object>();
+            res.Add(types);
+
+            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
+            var nextLink = new
+            {
+                nextLink = link +
+                "/api/Clients?PageNumber=" +
+                (clientParameters.PageNumber + 1) +
+                "&PageSize=" +
+                clientParameters.PageSize
+            };
+
+            res.Add(nextLink);
+
+            return Ok(res);
         }
 
         // GET: api/Types/5

@@ -22,23 +22,43 @@ namespace RestaurantAPIApplication.Controllers
 
         // GET: api/Places
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Place>>> GetPlaces()
+        public async Task<ActionResult<IEnumerable<Place>>> GetPlaces([FromQuery] Parameters clientParameters)
         {
-          if (_context.Places == null)
-          {
-              return NotFound();
-          }
-            return await _context.Places.ToListAsync();
+            if (_context.Places == null)
+            {
+                return NotFound();
+            }
+            var places = await _context.Places
+                  .OrderBy(on => on.Id)
+                  .Skip((clientParameters.PageNumber - 1) * clientParameters.PageSize)
+                  .Take(clientParameters.PageSize)
+                  .ToListAsync();
+
+            var res = new List<Object>();
+            res.Add(places);
+
+            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
+            var nextLink = new
+            {
+                nextLink = link +
+                "/api/Clients?PageNumber=" +
+                (clientParameters.PageNumber + 1) +
+                "&PageSize=" +
+                clientParameters.PageSize
+            };
+
+            res.Add(nextLink);
+            return Ok(res);
         }
 
         // GET: api/Places/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Place>> GetPlace(int id)
         {
-          if (_context.Places == null)
-          {
-              return NotFound();
-          }
+            if (_context.Places == null)
+            {
+                return NotFound();
+            }
             var place = await _context.Places.FindAsync(id);
 
             if (place == null)
@@ -85,10 +105,10 @@ namespace RestaurantAPIApplication.Controllers
         [HttpPost]
         public async Task<ActionResult<Place>> PostPlace(Place place)
         {
-          if (_context.Places == null)
-          {
-              return Problem("Entity set 'RestaurantDbContext.Places'  is null.");
-          }
+            if (_context.Places == null)
+            {
+                return Problem("Entity set 'RestaurantDbContext.Places'  is null.");
+            }
             _context.Places.Add(place);
             await _context.SaveChangesAsync();
 

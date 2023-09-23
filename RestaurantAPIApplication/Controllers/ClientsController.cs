@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
+using System.Net.Sockets;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPIApplication.Models;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 namespace RestaurantAPIApplication.Controllers
 {
@@ -22,13 +27,30 @@ namespace RestaurantAPIApplication.Controllers
 
         // GET: api/Clients
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetClients()
+        public async Task<ActionResult<IEnumerable<Client>>> GetClients([FromQuery] Parameters clientParameters)
         {
-          if (_context.Clients == null)
-          {
-              return NotFound();
-          }
-            return await _context.Clients.ToListAsync();
+            if (_context.Clients == null)
+            {
+                return NotFound();
+            }
+            var clients = await _context.Clients
+                .OrderBy(on => on.Id)
+                .Skip((clientParameters.PageNumber - 1) * clientParameters.PageSize)
+                .Take(clientParameters.PageSize)
+                .ToListAsync();
+            var res = new List<Object>();
+            res.Add(clients);
+
+            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
+            var nextLink = new { nextLink = link +
+                "/api/Clients?PageNumber=" +
+                (clientParameters.PageNumber + 1) +
+                "&PageSize=" +
+                clientParameters.PageSize };
+
+            res.Add(nextLink);
+
+            return Ok(res);
         }
 
         // GET: api/Clients/5

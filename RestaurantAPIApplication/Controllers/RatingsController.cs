@@ -22,23 +22,44 @@ namespace RestaurantAPIApplication.Controllers
 
         // GET: api/Ratings
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Rating>>> GetRatings()
+        public async Task<ActionResult<IEnumerable<Rating>>> GetRatings([FromQuery] Parameters clientParameters)
         {
-          if (_context.Ratings == null)
-          {
-              return NotFound();
-          }
-            return await _context.Ratings.ToListAsync();
+            if (_context.Ratings == null)
+            {
+                return NotFound();
+            }
+            var ratings = await _context.Ratings
+                    .OrderBy(on => on.Id)
+                    .Skip((clientParameters.PageNumber - 1) * clientParameters.PageSize)
+                    .Take(clientParameters.PageSize)
+                    .ToListAsync();
+
+            var res = new List<Object>();
+            res.Add(ratings);
+
+            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
+            var nextLink = new
+            {
+                nextLink = link +
+                "/api/Clients?PageNumber=" +
+                (clientParameters.PageNumber + 1) +
+                "&PageSize=" +
+                clientParameters.PageSize
+            };
+
+            res.Add(nextLink);
+
+            return Ok(res);
         }
 
         // GET: api/Ratings/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Rating>> GetRating(int id)
         {
-          if (_context.Ratings == null)
-          {
-              return NotFound();
-          }
+            if (_context.Ratings == null)
+            {
+                return NotFound();
+            }
             var rating = await _context.Ratings.FindAsync(id);
 
             if (rating == null)
@@ -85,10 +106,10 @@ namespace RestaurantAPIApplication.Controllers
         [HttpPost]
         public async Task<ActionResult<Rating>> PostRating(Rating rating)
         {
-          if (_context.Ratings == null)
-          {
-              return Problem("Entity set 'RestaurantDbContext.Ratings'  is null.");
-          }
+            if (_context.Ratings == null)
+            {
+                return Problem("Entity set 'RestaurantDbContext.Ratings'  is null.");
+            }
             _context.Ratings.Add(rating);
             await _context.SaveChangesAsync();
 
