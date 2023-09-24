@@ -41,7 +41,7 @@ namespace RestaurantAPIApplication.Controllers
             var nextLink = new
             {
                 nextLink = link +
-                "/api/Clients?PageNumber=" +
+                "/api/Ratings?PageNumber=" +
                 (clientParameters.PageNumber + 1) +
                 "&PageSize=" +
                 clientParameters.PageSize
