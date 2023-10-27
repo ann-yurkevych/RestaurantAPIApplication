@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPIApplication.Models;
@@ -34,20 +35,13 @@ namespace RestaurantAPIApplication.Controllers
                     .Take(clientParameters.PageSize)
                     .ToListAsync();
 
-            var res = new List<Object>();
-            res.Add(ratings);
+            Uri uri = new(Request.GetDisplayUrl());
 
-            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
-            var nextLink = new
+            var res = new
             {
-                nextLink = link +
-                "/api/Ratings?PageNumber=" +
-                (clientParameters.PageNumber + 1) +
-                "&PageSize=" +
-                clientParameters.PageSize
+                nextLink = uri.GetLeftPart(UriPartial.Authority) + "/api/Ratings?PageNumber=" + (clientParameters.PageNumber + 1) + "&PageSize=" + clientParameters.PageSize,
+                data = ratings
             };
-
-            res.Add(nextLink);
 
             return Ok(res);
         }

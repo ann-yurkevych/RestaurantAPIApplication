@@ -21,5 +21,7 @@ public partial class Place
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    public virtual ICollection<Favourite> Favourites { get; set; } = new List<Favourite>();
+
     public virtual Type Type { get; set; } = null!;
 }

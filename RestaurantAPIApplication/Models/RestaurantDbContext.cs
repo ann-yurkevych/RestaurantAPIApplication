@@ -23,27 +23,52 @@ public partial class RestaurantDbContext : DbContext
 
     public virtual DbSet<Type> Types { get; set; }
 
+    public virtual DbSet<Favourite> Favourites { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=DESKTOP-3H538OJ\\SQLSERVER;Database=RestaurantDB; Trusted_Connection=True; TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Client>(entity =>
         {
-            entity.Property(e => e.Name).HasMaxLength(50);
-            entity.Property(e => e.Surname).HasMaxLength(50);
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.Surname)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Favourite>(entity =>
+        {
+            entity.HasOne(d => d.Client).WithMany(p => p.Favourites)
+                .HasForeignKey(d => d.ClientId)
+                .HasConstraintName("FK_Favourites_Clients");
+
+            entity.HasOne(d => d.Place).WithMany(p => p.Favourites)
+                .HasForeignKey(d => d.PlaceId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Favourites_Places");
         });
 
         modelBuilder.Entity<Place>(entity =>
         {
-            entity.Property(e => e.CloseTime).HasMaxLength(8);
-            entity.Property(e => e.OpenTime).HasMaxLength(8);
-            entity.Property(e => e.Location).HasMaxLength(100);
+            entity.Property(e => e.CloseTime)
+                .IsRequired()
+                .HasMaxLength(8);
+            entity.Property(e => e.Location)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
+            entity.Property(e => e.OpenTime)
+                .IsRequired()
+                .HasMaxLength(8);
 
             entity.HasOne(d => d.Type).WithMany(p => p.Places)
                 .HasForeignKey(d => d.TypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Places_Types");
         });
 
@@ -51,7 +76,6 @@ public partial class RestaurantDbContext : DbContext
         {
             entity.HasOne(d => d.Client).WithMany(p => p.Ratings)
                 .HasForeignKey(d => d.ClientId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Ratings_Clients");
 
             entity.HasOne(d => d.Place).WithMany(p => p.Ratings)
@@ -64,7 +88,9 @@ public partial class RestaurantDbContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK_Type");
 
-            entity.Property(e => e.Name).HasMaxLength(50);
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

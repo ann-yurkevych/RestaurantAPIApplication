@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Text;
 using Microsoft.EntityFrameworkCore;
 using RestaurantAPIApplication.Models;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace RestaurantAPIApplication.Controllers
 {
@@ -38,17 +39,14 @@ namespace RestaurantAPIApplication.Controllers
                 .Skip((clientParameters.PageNumber - 1) * clientParameters.PageSize)
                 .Take(clientParameters.PageSize)
                 .ToListAsync();
-            var res = new List<Object>();
-            res.Add(clients);
 
-            var link = Environment.GetEnvironmentVariable("applicationUrl").Split(";")[0];
-            var nextLink = new { nextLink = link +
-                "/api/Clients?PageNumber=" +
-                (clientParameters.PageNumber + 1) +
-                "&PageSize=" +
-                clientParameters.PageSize };
+            Uri uri = new(Request.GetDisplayUrl());
 
-            res.Add(nextLink);
+            var res = new
+            {
+                nextLink = uri.GetLeftPart(UriPartial.Authority) + "/api/Clients?PageNumber=" + (clientParameters.PageNumber + 1) + "&PageSize=" + clientParameters.PageSize,
+                data = clients
+            };
 
             return Ok(res);
         }

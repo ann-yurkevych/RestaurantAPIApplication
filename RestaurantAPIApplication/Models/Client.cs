@@ -12,4 +12,6 @@ public partial class Client
     public string Surname { get; set; } = null!;
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+
+    public virtual ICollection<Favourite> Favourites { get; set; } = new List<Favourite>();
 }
